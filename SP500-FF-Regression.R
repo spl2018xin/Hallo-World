@@ -1,4 +1,5 @@
 library(quantmod)
+library(xts)
 
 # Read SP500 daily data and convert date column to date format
 SP500.data <- read.csv("SP500_price.adjusted_1990-2000.csv")
@@ -148,7 +149,7 @@ M<-diff(log(Stock.Prices.Monthly$MMM), lag=1)
 plot(M)
 
 
-# ======================= Automatic Regression ===============================
+# ======================= Batch Regression ===============================
 # loop over above codes to regress data from 1980 - 2015, group every 5 yrs.
 library(lubridate)
 List.of.start.date <- seq(as.Date("1980/1/1"), as.Date("2016/1/1"), "years")
@@ -157,10 +158,17 @@ List.of.start.date <- List.of.start.date[year(List.of.start.date)%%5==0]
 # FF3: 192607 - 201803, monthly
 FF3 <- read.csv("original/FF3.csv")
 
+# Each batch stores results for a 5yr group
+Batch <- list()
+Descriptions <- list()
+
+Beta.batch <- list()
+
 for(i in 1:(length(List.of.start.date)-1))
 {
   start.date <- as.Date(List.of.start.date[i])
   end.date <- as.Date(List.of.start.date[i+1])-1
+  print(paste(start.date, end.date,sep=" - "))
   
   # read data
   file.name <- paste("SP500_price.adjusted_", paste(year(start.date), year(end.date), sep="-"), ".csv", sep="")
@@ -171,8 +179,92 @@ for(i in 1:(length(List.of.start.date)-1))
   Stock.Prices.Daily <- SP500.data[SP500.data$date>= start.date & 
                                      SP500.data$date<= end.date,-1]
   
-  FF <- FF3[FF3$X >= format.Date(start.date, "%Y%m") & FF3$X <= format.Date(end.date, "%Y%m"), ]
+  # Convert series to XTS for using quantmod's monthlyReturn function
+  Stock.Prices.Daily <- xts(Stock.Prices.Daily[,-1], 
+                            order.by = as.POSIXct(Stock.Prices.Daily$date))
   
   # try a diff approach: loop over stocks and convert to monthly for each stock
   
+  # initialize
+  Results <- list()
+  Description <- data.frame()
+  
+  betas <- data.frame()
+  
+  # loop through stocks
+  for(j in 1:ncol(Stock.Prices.Daily))
+  {
+    # The j-th stock
+    Rj <- Stock.Prices.Daily[,j]
+    
+    cat(colnames(Stock.Prices.Daily[,j]), " ")
+    # non-NA entries
+    Rj <- Rj[!is.na(Rj),]
+    Rj <- monthlyReturn(Rj)
+    
+    # matching FF data
+    FF <- FF3[FF3$X >= format(index(head(Rj, n=1)), "%Y%m") & 
+              FF3$X <= format(index(tail(Rj, n=1)), "%Y%m"), ]
+    
+    # Rj is now RjRF
+    Rj <- Rj-FF$RF
+    Regression <- lm(Rj ~ FF$Mkt.RF + FF$SMB + FF$HML)
+    Results[[j]] <- summary(Regression)
+    Description <- rbind(Description, 
+                         data.frame(colnames(Stock.Prices.Daily[,j]), 
+                                    format(index(head(Rj, n=1)), "%Y%m"), 
+                                    format(index(tail(Rj, n=1)), "%Y%m"), 
+                                    length(Rj)))
+    
+    # Batch[[1]][[2]]$coefficients[,1]
+    # try read-out results at regression time
+    # betas, p-values, r-squareds
+    betas <- rbind(betas, cbind(data.frame(t(Results[[j]]$coefficients[,1])),
+                                data.frame(t(Results[[j]]$coefficients[,4])),
+                                data.frame(t(Results[[j]]$r.squared))))
+  }
+  print("")
+  
+  # Save all regression summaries
+  Batch[[i]] <- Results
+  
+  # Save the ticker / dates for ease of tracking the regression summary
+  colnames(Description) = c("Ticker", "Start.Month", "End.Month", "Number.of.Months")
+  Descriptions[[i]] <- Description
+  
+  # Save the regression results for plotting
+  colnames(betas) <- c("Intercept", "Mkt-Rf", "SMB", "SML", 
+                       "P(Intercept)", "P(Mkt-Rf)", "P(SMB)", "P(SML)",
+                       "R-squared")
+  
+  # Try rbind here instead of list for convenience of melt.
+  Beta.batch[[i]] <- betas
+  
+  # remove temp variables
+  rm(Description)
+  rm(Results)
+  rm(Regression)
+  rm(Rj)
+  
+  rm(betas)
 }
+
+# Boxplot
+# Combine all batches together into one large dataframe
+df <- data.frame()
+for(i in 1:(length(List.of.start.date)-1))
+{
+  start.date <- as.Date(List.of.start.date[i])
+  end.date <- as.Date(List.of.start.date[i+1])-1
+  # print(paste(year(start.date), year(end.date),sep="-"))
+  label <- paste(year(start.date), year(end.date),sep="-")
+  df <- rbind(df, cbind(rep(label, dim(Beta.batch[[i]])[1]), Beta.batch[[i]]))
+}
+
+colnames(df) <- c("Year",
+                  "Intercept", "Mkt-Rf", "SMB", "SML", 
+                  "P(Intercept)", "P(Mkt-Rf)", "P(SMB)", "P(SML)",
+                  "R-squared")
+
+df.melt <- melt(df, "Year")
+ggplot(df.melt, aes(x=Year, y=value)) + geom_boxplot() + facet_wrap(~ variable, scales='free')
