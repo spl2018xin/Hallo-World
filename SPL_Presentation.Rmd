@@ -1,0 +1,365 @@
+---
+title: "SPL: Fama French Factor Model"
+author: "Xin"
+date: "2018/6/9"
+output: beamer_presentation
+bibliography: FamaFrench.bib
+fontsize: 10pt
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## Structure
+
+\large
+
+1. Model
+
+2. Data 
+
+3. Results
+
+\normalsize
+
+## 1. Model
+
+- CAPM
+$R_i-R_F = \beta\cdot(R_M-R_F)$
+\newline
+
+- @Fama1993 3 Factors
+$R_i-R_F = \beta_M\cdot(R_M-R_F) + \beta_S\cdot SMB + \beta_V\cdot HML$
+\newline
+
+- @Fama2015 5 Factors
+$R_i-R_F = \beta_M\cdot(R_M-R_F) + \beta_S\cdot SMB + \beta_V\cdot HML + \beta_P\cdot RMW + \beta_I\cdot CMA$
+
+
+## 2. Data
+
+- Model factors including the estimated market return and the risk-free rate from
+Kenneth French's data library: http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html \newline
+
+- S&P 500 stock prices downloaded with `BatchGetSymbols` library.
+
+\small
+```{r echo=TRUE, eval=FALSE}
+library(BatchGetSymbols)
+Companies <- GetSP500Stocks()
+Stocks<- BatchGetSymbols(tickers = Companies$tickers, 
+                     first.date = "2010-01-01", 
+                     last.date = "2017-12-31")
+```
+\normalsize
+
+## 2. Data: S&P 500
+
+- `GetSP500Stocks()` returns company info like name and sector. \newline
+
+- Downloaded stock data contains two dataframes: \newline
+__df.control__ descriptive info. e.g. whether the download for the ticker is successful.\newline
+__df.tickers__ downloaded price data, stacked in rows.\newline
+
+- `BatchGetSymbols()` function __keeps__ stocks with 75% or more price points compared to the benchmark. \newline We took _3M Company_'s dates as they are complete.\newline
+
+\small
+```{r echo=TRUE, eval = FALSE}
+good.tickers <- Stocks$df.control$
+    ticker[Stocks$df.control$threshold.decision=="KEEP"]
+
+SP500.data<-data.frame(date = Stocks$df.tickers$
+             ref.date[Stocks$df.tickers$ticker=="MMM"]) 
+```
+\normalsize
+
+## 2. Data: S&P 500
+
+- Loop over the downloaded data __df.tickers__.
+- Subset each company by its ticker.
+- Rename `colname` of the price series to the ticker symbol.
+- Merge to the existing dataframe by matching dates.
+
+\small
+```{r echo=TRUE, eval = FALSE}
+for(i in 1:length(good.tickers))
+{
+  X <- data.frame(date = 
+    Stocks$df.tickers$
+      ref.date[Stocks$df.tickers$ticker==good.tickers[i]], 
+    Stocks$df.tickers$
+      price.adjusted[Stocks$df.tickers$ticker
+                                ==good.tickers[i]])
+  
+  colnames(X)[2] <- Stocks$df.tickers$
+        ticker[Stocks$df.tickers$ticker==good.tickers[i]]
+  
+  SP500.data <- merge.data.frame(SP500.data, X, 
+                                by = "date", all.x = TRUE)
+}
+```
+\normalsize
+
+
+## 2. Data: from Daily Price to Monthly Return
+
+__`quantmod::monthlyReturn()`__ requires non-`NA` daily prices in __`xts`__ format.
+
+\small
+```{r echo=TRUE, eval = FALSE}
+Stock.Prices.Daily <- 
+  xts(Stock.Prices.Daily[,-1], 
+        order.by = as.POSIXct(Stock.Prices.Daily$date))
+
+Stock.Prices.Daily <- 
+  Stock.Prices.Daily[!is.na(Stock.Prices.Daily)]
+
+Stock.Prices.Monthly <- monthlyReturn(Stock.Prices.Daily)
+```
+\normalsize
+
+How to chose? 
+
+- __Remove stocks with `NA`__ ensures remaining stocks have same number of observations. 
+
+- __Remove `NA`s in each series__ results in a larger sample size.
+
+Price data with `NA`s in the middle might result in strange monthly returns. 
+\scriptsize("BHY" Brighthouse Financial Inc. removed for 2015-2017 runs)
+
+## 2. Data: Linear Regression
+
+- Linear Regression in R
+
+```{r echo=FALSE}
+library(readxl)
+FF3<- read_excel("Data/FF3_196307-199112.xlsx")
+# unlist: convert the data into vector format
+rmrf<-unlist(FF3[,2])
+P25<- read_excel("Data/FF3_25_ValueWeighted.xlsx")
+rmrf<-unlist(FF3[,2])
+smb<-unlist(FF3[,3])
+hml<-unlist(FF3[,4])
+rf<-unlist(FF3[,5])
+ri<-unlist(P25[,2])
+rirf<-unlist(ri-rf)
+```
+
+\small
+```{r echo=TRUE}
+y <- lm(rirf ~ rmrf + smb + hml);
+round(summary(y)$coefficients, digits = 4)
+```
+\normalsize
+
+- We can read out the regression summary from the `coefficients` matrix.\newline
+
+- Similarly $R^2$ from `summary(y)$r.squared` \newline 
+and standard errors from `summary(y)$sigma`.
+
+## 3. Results
+
+\large
+Overview:
+\normalsize
+
+- Replicating @Fama1993
+
+- Regression over S&P500 stocks
+
+- 3 Factors vs. 5 Factors
+
+- Stock selection?
+
+
+## 3.1 Results: Replicating the 3 Factors Model
+\noindent\makebox[\textwidth]{\includegraphics[width=\paperwidth]{FF3_Results.pdf}}
+
+## 3.1 Results: Replicating the 3 Factors Model
+
+Results from @Fama1993:
+\noindent\makebox[\textwidth]{\includegraphics[width=\paperwidth]{FF1993-Table6.png}}
+
+
+## 3.2 Regression over S&P 500 stocks (All)
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.90\paperwidth]{Plots/SP500-1980-2015.png}}
+
+## 3.2 Regression over S&P 500 stocks (Survivors)
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.90\paperwidth]{Plots/SP500-1980-2015-168-stock.png}}
+
+
+## 3.3 3 Factors vs. 5 Factors
+
+- $R^2$ Comparison
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.95\paperwidth]{Plots/R2-FF-SP500-2010-2017.png}}
+
+\tiny\linespread{0.5}
+CD: Consumer Discretionary, CS: Consumer Staples, E: Energy, FI: Financials, H: Health Care, I: Industrials,\newline 
+IT: Information Technology, M: Materials, RE: Real Estate, T: Telecommunication Services, U: Utilities
+\normalsize
+
+## 3.3 3 Factors vs. 5 Factors
+
+- P-Values: 3 Factors
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.95\paperwidth]{Plots/P-FF3-SP500-2010-2017.png}}
+
+\tiny\linespread{0.5}
+CD: Consumer Discretionary, CS: Consumer Staples, E: Energy, FI: Financials, H: Health Care, I: Industrials,\newline 
+IT: Information Technology, M: Materials, RE: Real Estate, T: Telecommunication Services, U: Utilities
+\normalsize
+
+## 3.3 3 Factors vs. 5 Factors
+
+- P-Values: 5 Factors
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.95\paperwidth]{Plots/P-FF5-SP500-2010-2017.png}}
+
+\tiny\linespread{0.5}
+CD: Consumer Discretionary, CS: Consumer Staples, E: Energy, FI: Financials, H: Health Care, I: Industrials,\newline 
+IT: Information Technology, M: Materials, RE: Real Estate, T: Telecommunication Services, U: Utilities
+\normalsize
+
+
+
+## 3.3 3 Factors vs. 5 Factors
+
+- Regressed Coefficients: 3 Factors
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.95\paperwidth]{Plots/b-FF3-SP500-2010-2017.png}}
+
+\tiny\linespread{0.5}
+CD: Consumer Discretionary, CS: Consumer Staples, E: Energy, FI: Financials, H: Health Care, I: Industrials,\newline 
+IT: Information Technology, M: Materials, RE: Real Estate, T: Telecommunication Services, U: Utilities
+\normalsize
+
+## 3.3 3 Factors vs. 5 Factors
+
+- Regressed Coefficients: 5 Factors
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.95\paperwidth]{Plots/b-FF5-SP500-2010-2017.png}}
+
+\tiny\linespread{0.5}
+CD: Consumer Discretionary, CS: Consumer Staples, E: Energy, FI: Financials, H: Health Care, I: Industrials,\newline 
+IT: Information Technology, M: Materials, RE: Real Estate, T: Telecommunication Services, U: Utilities
+\normalsize
+
+
+## 3.4 Stock Selection?
+
+- Stock returns from Jan. 2010 to Dec. 2017. \newline 
+Corr. plot of the stock returns and the regressed coefficients.
+
+- _alpha_ or _Intercept_ highly correlated to stock returns.
+
+- Positive corr. to SMB: Small cap premium.\newline
+Negative corr. to HML: Market seemed to favor __Growth__ stocks (instead of __Value__) in the bullish years.
+
+- Negative corr. to RMW and CMA.
+
+\noindent\makebox[\textwidth]{
+  \includegraphics[width=0.45\paperwidth]{Plots/Corrplots/SP500-FF3-all-2010-2017.png}
+  \includegraphics[width=0.45\paperwidth]{Plots/Corrplots/SP500-FF5-all-2010-2017.png}
+}
+
+## 3.4 Stock Selection: 3 Factor / Top and Bottom 20s
+
+- Winners have positive correlations to both _SMB_ and _HML_, \newline while losers have negative correlations.
+
+- Small Cap and Value premiums work at the extremes.
+
+\noindent\makebox[\textwidth]{
+  \includegraphics[width=0.45\paperwidth]{Plots/Corrplots/SP500-FF3-Top20-2010-2017.png}
+  \includegraphics[width=0.45\paperwidth]{Plots/Corrplots/SP500-FF3-Bottom20-2010-2017.png}
+}
+
+Although the overall winner, _NETFLIX_, is clearly neither _small cap_ nor _value_.
+
+## 3.4 Stock Selection: 5 Factor / Top and Bottom 20s
+
+- Recall: the regressed coefficient for the __Profitability__ factor _RMW_ have different signs for different industry sectors. It is difficult to interpret based on positive / negative corr.
+
+- __Investment__ factor _CMA_ is negatively correlated to the returns of both winners and losers: both winners and losers invest aggressively [?]. 
+
+
+
+\noindent\makebox[\textwidth]{
+  \includegraphics[width=0.45\paperwidth]{Plots/Corrplots/SP500-FF5-Top20-2010-2017.png}
+  \includegraphics[width=0.45\paperwidth]{Plots/Corrplots/SP500-FF5-Bottom20-2010-2017.png}
+}
+
+## Thank You!
+
+\large Below are backup slides
+\normalsize
+
+## Melt and Plotting 
+
+- Regression results in dataframe `Results`. 
+
+- `reshape::melt()` prepares the data for plots.
+
+- Each Fama French factor will have 1 sub-plot comparing different sectors \newline
+
+\scriptsize
+```{r echo=TRUE, eval = FALSE}
+df.melt <- melt(
+  Results[,c("Intercept", "Mkt-Rf", "SMB", "HML", "RMW", "CMA", "Sec")], 
+  "Sec"
+)
+```
+\normalsize
+
+- Boxplot with the melted data
+
+\scriptsize
+```{r echo=TRUE, eval = FALSE}
+ggplot(df.melt, aes(x=Sec, y=value)) 
+  + geom_boxplot() 
+  + facet_wrap(~ variable, scales='free')
+```
+\normalsize
+
+## Helper functions
+
+- Resizing the regression output from an 1 dimensional vector to the same format as in the papers with rows for _SMB_ and columns for _HML_.
+
+\scriptsize
+```{r echo=TRUE, eval=FALSE}
+resize <- function(x)
+{
+  return(
+    matrix(x, nrow=5, byrow = TRUE, 
+        dimnames = list(
+          c("SMALL", "2", "3", "4", "BIG"), 
+          c("LOW", "2", "3", "4", "HIGH")
+        )
+    )
+  )
+}
+```
+\normalsize
+
+## Descriptions copied from K.French's Website
+
+Description of the factors:
+<http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/f-f_5_factors_2x3.html>
+
+- SMB (Small Minus Big) is the average return on the nine small stock portfolios minus the average return on the nine big stock portfolios.
+- HML (High Minus Low) is the average return on the two value portfolios minus the average return on the two growth portfolios. 
+
+- RMW (Robust Minus Weak) is the average return on the two robust operating profitability portfolios minus the average return on the two weak operating profitability portfolios.
+- MA (Conservative Minus Aggressive) is the average return on the two conservative investment portfolios minus the average return on the two aggressive investment portfolios.
+
+
+## Descriptions copied from K.French's Website (cont.)
+
+- Rm-Rf, the excess return on the market, value-weight return of all CRSP firms incorporated in the US and listed on the NYSE, AMEX, or NASDAQ that have a CRSP share code of 10 or 11 at the beginning of month t, good shares and price data at the beginning of t, and good return data for t minus the **one-month Treasury bill rate** (from Ibbotson Associates).
+
+## References

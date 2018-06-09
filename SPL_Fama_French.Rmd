@@ -80,7 +80,18 @@ library(BatchGetSymbols)
 
 # Get company information incl. tickers for SP500 stocks
 Companies <- GetSP500Stocks()
+```
 
+```{r echo = T}
+kable(head(Companies, n=5)[,1:5])
+kable(head(Companies[,6:9], n=5))
+```
+
+
+Function `GetSP500Stocks()` returns S&P500 company information including name, tickers and sectors. For downloading the price data, we only need the tickers.
+
+
+```{r echo=TRUE, results='hide', message=F, warning=F}
 # Batch download data from Yahoo Finance
 Stocks<- BatchGetSymbols(tickers = Companies$tickers, 
                      first.date = "2017-01-01", 
@@ -107,8 +118,8 @@ kable(head(Stocks$df.tickers[,6:10], n=3))
 
 Below code selects the downloaded tickers (marked by `df.control$threshold.decision=="KEEP"`) and use the dates from 3M as the date column for dataframe `SP500.data`. 
 
-It reads stocks ticker by ticker and matches previous price series by date. The unmatched dates will have `NA`s. The new stock price series is merged into the dataframe as a new column with the ticker symbol as the column name.
 
+It reads stocks ticker by ticker and matches previous price series by date. The unmatched dates will have `NA`s. The new stock price series is merged into the dataframe as a new column with the ticker symbol as the column name.
 
 
 ```{r eval = FALSE}
@@ -142,6 +153,7 @@ for(i in 1:length(good.tickers))
 }
 ```
 
+
 We write the processed data to CSVs.
 
 \newpage
@@ -155,8 +167,8 @@ setwd("~/Dropbox/Study/R/Fama French")
 `readxl` library for reading Excel data. 
 
 The imported data would be stored as `data.frame` and must be `unlist()` into vectors for regression.
-
 (data.frame is also a list in R)
+
 
 ```{r}
 library(readxl)
@@ -177,6 +189,7 @@ rirf<-unlist(ri-rf)
 
 
 OLS regression can be performed with two lines of code:
+
 
 ```{r}
 y <- lm(rirf ~ rmrf + smb + hml);
@@ -277,6 +290,10 @@ HML.t <- resize(t.values[4,])
 
 kable(market.t, digits=2)
 kable(SMB.t, digits=2)
+```
+
+\newpage
+```{r}
 kable(HML.t, digits=2)
 
 # resize R-squareds
@@ -619,6 +636,38 @@ Surprisingly, results has only minor changes.
 
 \includegraphics{Plots/SP500-1980-2015-168-stock.PNG}
 
+\newpage
+## 5.3 Stock Selection
+
+
+A natural question arised from the study is whether we could use the model for stock selection. We can easily calculate period returns by $R_i = P_T / P_0 -1$ from the first and last adjusted closing prices of each stock.
+
+
+The top and bottom 10 stocks in terms of gross returns from January 2010 to December 2017 are:
+
+
+```{r echo = F}
+Top20<-read.csv("FF3-Top20-2010-2017.csv")
+colnames(Top20)<-c("X","Ticker","Ri","Name","Sector","Sec","R2","Adj.R2","a","Mkt","SMB","HML","P(a)","P(M)","P(S)","P(H)")
+kable(Top20[1:10,c(2,4,6,3,7,9:16)], digits = 2)
+Bottom20<-read.csv("FF3-Bottom20-2010-2017.csv")
+colnames(Bottom20)<-c("X","Ticker","Ri","Name","Sector","Sec","R2","Adj.R2","a","Mkt","SMB","HML","P(a)","P(M)","P(S)","P(H)")
+kable(Bottom20[1:10,c(2,4,6,3,7,9:16)], digits = 2)
+```
+
+
+We can use the `cor()` function to calculate the correlation matrix of data series and the `corrplot` library for plotting. 
+
+
+**All Stocks / Top 20 / Bottom 20**
+
+
+\includegraphics{Plots/SP500-FF3-2010-2017.png}
+
+
+Plotting the correlations between regression results and stock returns reveal no particular pattern except for the intercept term in general. Top 20 stock returns do show positive correlations of the 3 factors, while the bottom 20 show negative correlations, which is consistent with the rationale behind the factors.
+
+
 
 # 6. Going 5-Factor
 
@@ -685,7 +734,7 @@ $Rˆ2$'s are generally higher with the 5 Factor models.
 \includegraphics{Plots/R2-FF-SP500-2010-2017.png}
 
 
-The most noticable difference between 3 factors and 5 factors is also with Telecommunication sector, with p-values for *HML* (value) and *CMA* (investment) being much smaller (significant) in the 5-factor model.
+The most noticeable difference between 3 factors and 5 factors is also with Telecommunication sector, with p-values for *HML* (value) and *CMA* (investment) being much smaller (significant) in the 5-factor model.
 
 \newpage
 Fama French 3 Factors:
@@ -707,6 +756,26 @@ The regressed coefficients from the 3 Factors model:
 and 5 Factors model:
 
 \includegraphics{Plots/b-FF5-SP500-2010-2017.png}
+
+
+
+We can use the same method as section 5.3 to visualize the correlation between stock returns and the regression results of the Fama French 5 Factors model. Here the top 20 are the 20 stocks with the greatest returns from January 2010 to December 2017, same as in section 5.3. 
+
+
+**All Stocks / Top 20 / Bottom 20**
+
+
+\includegraphics{Plots/SP500-FF5-2010-2017.png}
+
+
+A large portion of the return is still captured by *alpha* the intercept.
+Surprisingly, the top 20 stock returns show negative correlations with the added *RMW* and *CMA* factor, while the bottom 20 stock returns show positive correlations with *RMW* and still negative correlations with *CMA*. This proves that one cannot predict the future from the past: 
+
+
+1. Winning stocks might not have robust operating profitability: a large portion of earnings is invested.
+
+
+2. Winning stocks seem to benefit from past aggressive investments. 
 
 
 
