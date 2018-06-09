@@ -283,9 +283,9 @@ Although the overall winner, _NETFLIX_, is clearly neither _small cap_ nor _valu
 
 ## 3.4 Stock Selection: 5 Factor / Top and Bottom 20s
 
-- Recall: the regressed coefficient for the __Profitability__ factor _RMW_ have different signs for different industry sectors. It is difficult to interpret based on positive / negative corr.
+- __Profitability__ factor _RMW_: negatively corr. to returns of winners and positively corr. to that of losers: might not be good indicator for stock selection. \newline Negative regressed beta for _RMW_ for certain sectors: companies might have poor near-term operating performance but very high future potentials, which is _priced-in_ to the current stock prices.
 
-- __Investment__ factor _CMA_ is negatively correlated to the returns of both winners and losers: both winners and losers invest aggressively [?]. 
+- __Investment__ factor _CMA_ is negatively correlated to the returns of both winners and losers: both winners and losers invest aggressively? 
 
 
 
