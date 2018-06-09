@@ -1,6 +1,6 @@
 ---
 title: "SPL: Fama French Factor Model"
-author: "Xin"
+author: "Xin Tan, Daria Skidnova, Jeff Giddens"
 date: "2018/6/9"
 output: beamer_presentation
 bibliography: FamaFrench.bib
