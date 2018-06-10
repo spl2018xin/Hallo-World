@@ -294,6 +294,20 @@ Although the overall winner, _NETFLIX_, is clearly neither _small cap_ nor _valu
   \includegraphics[width=0.45\paperwidth]{Plots/Corrplots/SP500-FF5-Bottom20-2010-2017.png}
 }
 
+## 3.4 Stock Selection: 5 Factor / Top and Bottom Factors
+
+- Calculate return percentile for each stock (best return ~ 1, worst ~ 0).
+
+- Filter out largest and smallest estimated coefficient for each factor.
+
+- With and without considering the significance level of 5%.
+
+\noindent\makebox[\textwidth]{\includegraphics[width=\paperwidth]{Plots/Return-Percentile-2010-2017.png}}
+
+- Not considering significance, market seems to favor __growth__ stocks.
+
+- Most of the stocks with lowest estimated coefficient for _HML_ belongs to _Health Care_ or _Consumer Discretionary_. 
+
 ## Thank You!
 
 \large Below are backup slides
@@ -325,6 +339,23 @@ ggplot(df.melt, aes(x=Sec, y=value))
   + facet_wrap(~ variable, scales='free')
 ```
 \normalsize
+
+## Melt and Plotting
+
+- Illustration of `reshape::melt()`: \newline
+Data is reshaped into one dimensional vector with group / subgroups in additional columns.
+
+\scriptsize
+```{r echo=TRUE, eval = FALSE}
+df.melt <- melt(
+  Results[,c("Intercept", "Mkt-Rf", "SMB", "HML", "RMW", "CMA", "Sec")], 
+  "Sec"
+)
+```
+\normalsize
+
+\noindent\makebox[\textwidth]{\includegraphics[width=0.8\paperwidth]{melt_example.pdf}}
+
 
 ## Helper functions
 

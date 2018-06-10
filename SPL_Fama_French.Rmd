@@ -775,8 +775,40 @@ Surprisingly, the top 20 stock returns show negative correlations with the added
 1. Winning stocks might not have robust operating profitability: a large portion of earnings is invested.
 
 
-2. Winning stocks seem to benefit from past aggressive investments. 
+2. Winning stocks seem to benefit from past aggressive investments. \newline
 
 
+
+
+Another perspective is we could look at the regressed factor values and see whether we can select stock based on these values. We first calculate the percentile for each stock return using the `ecdf()` function: below code first defines our percentile function by supplying the all stock returns as a vector, then the `ecdf_percentile()` function can return a vector of percentiles, given a vector of returns.
+
+
+```{r echo=TRUE, eval=FALSE}
+# Define function
+ecdf_percentile <- ecdf(Results$Return)
+# Apply function. 
+ecdf_percentile(Results$Return)
+```
+
+
+Among 443 stocks with regression results, we take top 20 and bottom 20 stocks for the estimated coefficient of each factor. We then boxplot their return percentiles. Stock with greatest return from 2010 to 2017 will have a return percentile close to 1, stocks with poor returns will have a percentile close to 0.
+
+
+We perform the selection with and without filtering for significance of the estimated coefficient.
+
+
+\includegraphics{Plots/Return-Percentile-2010-2017.png}
+
+
+From the results, if we only consider value without significance, *HML* shows strong separation power that **Growth** stocks with low book-to-market ratio outperform in this period, while **Value** stocks perform below average. Looking into the 20 stocks with the lowest estimated *HML* coefficient reveals that they are mostly Health Care or Comsumer Discretionary. When limiting scope to coefficients that are significant at 5% level, however, shows no particular separation power of all Fama French factors. Interestingly, at 5% significance, stocks with largest market exposure and smallest market exposure (CAPM beta / beta for Mkt-Rf) all perform below average.
+
+
+```{r echo=FALSE}
+temp <- read.csv("FF5-Return-Factor-Bottom-Not-Significant.csv")
+temp <- temp[,-1]
+temp <- data.frame(temp[temp$Factor=="HML", c("Ticker", "Name", "Sector", "Factor", "Factor.Value", "Factor.P", "Return.2010.2017", "Return.Percentile")])
+colnames(temp)<-c("Ticker", "Name", "Sector", "Factor", "Est.Beta", "P-Value", "Return", "Percentile")
+kable(temp, row.names = FALSE, digits = 2) 
+```
 
 # References
