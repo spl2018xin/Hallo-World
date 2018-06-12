@@ -5,7 +5,7 @@ library(ggplot2)
 # Same as the FF3_25 one
 # FF5 paper P13 Table 7
 
-Stocks <- read.csv("Data/original/25_Portfolios_5x5_Value.CSV")
+Stocks <- read.csv("FF3_25_ValueWeighted.xlsx")
 # Stocks <- read.csv("Data/original/25_Portfolios_5x5_Wout_Div.CSV")
 FF5 <- read.csv("Data/original/F-F_Research_Data_5_Factors_2x3.csv")
 
