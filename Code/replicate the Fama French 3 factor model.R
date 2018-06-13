@@ -7,6 +7,7 @@
 #1# Date Preparation
 
 library(readxl)
+
 # FF3 is the monthly data collection of the three factors from 1963/07 to 1991/12
 FF3 <- read_excel("Data/FF3_196307-199112.xlsx")
 
