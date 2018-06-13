@@ -65,7 +65,7 @@ resize <- function(x) {
                   dimnames = list (c("SMALL", "2", "3", "4", "BIG"), c("LOW", "2", "3", "4", "HIGH"))))
 }
 
-# resize alpha
+# resize alpha (intercept)
 alpha <- resize(betas[1, ])
 alpha
 
@@ -88,4 +88,12 @@ market.t
 # resize R-squareds
 resize(R.squareds)
 resize(std.errors)
+
+# create a table with all coefficients and t statistics
+coef.t <- cbind (rbind (alpha, market.beta, SMB.beta, HML.beta), 
+                 rbind(resize(t.values[1,]), market.t, SMB.t, HML.t))
+View(coef.t)
+
+
+
 
