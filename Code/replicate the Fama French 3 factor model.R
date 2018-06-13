@@ -31,7 +31,7 @@ rirf
 results <- list()
 
 # Data starts from the 2nd col of P25
-for (i in 1:(ncol (P25) - 1)) { 
+for (i in 1:(ncol(P25) - 1)) { 
   rirf <- unlist (P25[, i + 1]) - rf   
      y <- lm (rirf ~ rmrf + smb + hml)
   results[[i]] <- summary (y)
