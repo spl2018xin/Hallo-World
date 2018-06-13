@@ -4,7 +4,6 @@
 #                                                                #
 ##################################################################
 
-
 #1# Date Preparation
 
 library(readxl)
@@ -13,6 +12,7 @@ FF3 <- read_excel("Data/FF3_196307-199112.xlsx")
 
 # P25 is value-weighted 5*5 portfolios from 1963/07 to 1991/12
 P25 <- read_excel("Data/FF3_25_ValueWeighted.xlsx")
+
 
 #2# read regression factors
 
