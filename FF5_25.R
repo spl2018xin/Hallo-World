@@ -1,14 +1,15 @@
 library(reshape)    # required for melt function in plotting
 library(ggplot2)
+library(readxl)
 
 # 25 Portfolios Formed on Size and Book-to-Market (5 x 5)
 # Same as the FF3_25 one
 # FF5 paper P13 Table 7
 
-Stocks <- read.csv("FF3_25_ValueWeighted.xlsx")
-# Stocks <- read.csv("Data/original/25_Portfolios_5x5_Wout_Div.CSV")
-FF5 <- read.csv("Data/original/F-F_Research_Data_5_Factors_2x3.csv")
-
+# 5*5 value weighted portfolios (from 07/1963 to 12/1991)
+FF3_25_ValueWeighted <- read_excel("Data/FF3_25_ValueWeighted.xlsx")
+# 
+FF3_factors <- read_excel("Data/FF3_25_ValueWeighted.xlsx")
 start.date <- "196307"
 end.date <- "201312"
 
