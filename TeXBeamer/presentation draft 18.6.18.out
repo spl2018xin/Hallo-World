@@ -1,0 +1,15 @@
+\BOOKMARK [2][]{Outline0.1}{Introduction}{}% 1
+\BOOKMARK [2][]{Outline0.2}{Theory and Design}{}% 2
+\BOOKMARK [3][]{Outline0.2.1.5}{The Fama-French Three-Factor Model}{Outline0.2}% 3
+\BOOKMARK [3][]{Outline0.2.2.5}{Data Preparation}{Outline0.2}% 4
+\BOOKMARK [2][]{Outline0.3}{Replicating the Three-Factor Model}{}% 5
+\BOOKMARK [3][]{Outline0.3.1.2}{Batch Regression}{Outline0.3}% 6
+\BOOKMARK [3][]{Outline0.3.2.3}{Formatting the Results}{Outline0.3}% 7
+\BOOKMARK [3][]{Outline0.3.3.5}{Comparison with the Original Fama-French Results}{Outline0.3}% 8
+\BOOKMARK [2][]{Outline0.4}{Applying the Fama-French Model to the S\046P 500}{}% 9
+\BOOKMARK [3][]{Outline0.4.1.2}{Data Preparation}{Outline0.4}% 10
+\BOOKMARK [3][]{Outline0.4.2.7}{Fama-French in 2010-2017}{Outline0.4}% 11
+\BOOKMARK [3][]{Outline0.4.3.10}{Trend Analysis in 1980-2015}{Outline0.4}% 12
+\BOOKMARK [3][]{Outline0.4.4.14}{Varying Sample Sizes}{Outline0.4}% 13
+\BOOKMARK [3][]{Outline0.4.5.17}{Correlation of The factors and Top 20 and Bottom 20 returns}{Outline0.4}% 14
+\BOOKMARK [2][]{Outline0.5}{Conclusion}{}% 15

@@ -1,0 +1,16 @@
+\babel@toc {english}{}
+\beamer@sectionintoc {1}{Introduction}{2}{0}{1}
+\beamer@sectionintoc {2}{Theory and Design}{4}{0}{2}
+\beamer@subsectionintoc {2}{1}{The Fama-French Three-Factor Model}{5}{0}{2}
+\beamer@subsectionintoc {2}{2}{Data Preparation}{5}{0}{2}
+\beamer@sectionintoc {3}{Replicating the Three-Factor Model}{6}{0}{3}
+\beamer@subsectionintoc {3}{1}{Batch Regression}{2}{0}{3}
+\beamer@subsectionintoc {3}{2}{Formatting the Results}{3}{0}{3}
+\beamer@subsectionintoc {3}{3}{Comparison with the Original Fama-French Results}{5}{0}{3}
+\beamer@sectionintoc {4}{Applying the Fama-French Model to the S\&P 500}{7}{0}{4}
+\beamer@subsectionintoc {4}{1}{Data Preparation}{2}{0}{4}
+\beamer@subsectionintoc {4}{2}{Fama-French in 2010-2017}{7}{0}{4}
+\beamer@subsectionintoc {4}{3}{Trend Analysis in 1980-2015}{10}{0}{4}
+\beamer@subsectionintoc {4}{4}{Varying Sample Sizes}{14}{0}{4}
+\beamer@subsectionintoc {4}{5}{Correlation of The factors and Top 20 and Bottom 20 returns}{17}{0}{4}
+\beamer@sectionintoc {5}{Conclusion}{18}{0}{5}
