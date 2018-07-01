@@ -10,6 +10,7 @@ fontsize: 10pt
 ```{r setup, include=FALSE}
 library(knitr)
 knitr::opts_chunk$set(echo = FALSE)
+setwd("~/Dropbox/Study/R/Fama French/")
 ```
 
 
