@@ -64,6 +64,37 @@ Refer to [Wikepedia](https://en.wikipedia.org/wiki/Fama%E2%80%93French_three-fac
 
 The downloaded CSV data contains headers and footers that need to be removed before input to R.
 
+
+Further, the downloaded data is in percentage returns (e.g. 20% return stored as 20). This will not affect replicating the Fama French model, since the portfolio returns are also provided in percentages. However, we need to be careful when regressing stock returns on Fama French factors, as those are calculated from daily prices and 20% will be 0.2. We can always verify the correctness of data magnitude by checking the market beta to be around 1 and not in 0.01s or 100s. 
+
+
+Running the summary statistics of the monthly excess returns on the 25 stock portfolios reveals that they differ from those reported in @Fama1993, table 2. Hence we expect that replication of the 3 factors model will generate slightly different regression results.
+
+
+```{r echo=FALSE}
+library(readxl)
+FF3<- read_excel("Data/FF3_196307-199112.xlsx")
+P25 <- read_excel("Data/25 Average Equal Weighted Returns -- Monthly.xlsx")
+```
+```{r}
+# resize the output to 5x5 format like Fama French paper
+resize <- function(x)
+{
+  df = data.frame(matrix(x, nrow=5, byrow = TRUE))
+  colnames(df) = c("Low", "2", "3", "4", "High")
+  rownames(df) = c("Small", "2", "3", "4", "Big")
+  return(df)
+}
+
+P25.return <- colMeans(P25[,-1]-FF3$RF)
+P25.std <- apply(P25[,-1]-FF3$RF, 2, sd)
+kable(resize(P25.return), digits = 2)
+kable(resize(P25.std), digits = 2)
+```
+
+\includegraphics{FF1993-Table2.PNG}
+
+
 ## 2.2 S&P 500 Stock Data
 
 The [`BatchGetSymbols`](https://cran.r-project.org/web/packages/BatchGetSymbols/index.html) library has a function `BatchGetSymbols()` for downloading S&P500 stock prices and volumes from a cached repository, thus avoiding problems when downloading large amount of data directly from Yahoo or Google (e.g. the `getSymbols` function from the [`quantmod`](https://www.quantmod.com/documentation/getSymbols.html) library) 
@@ -171,14 +202,12 @@ The imported data would be stored as `data.frame` and must be `unlist()` into ve
 
 
 ```{r}
-library(readxl)
-FF3<- read_excel("Data/FF3_196307-199112.xlsx")
 # unlist: convert the data into vector format
 rmrf<-unlist(FF3[,2])
 ```
 
 ```{r echo=FALSE}
-P25<- read_excel("Data/FF3_25_ValueWeighted.xlsx")
+P25<- read_excel("Data/25 Average Equal Weighted Returns -- Monthly.xlsx")
 rmrf<-unlist(FF3[,2])
 smb<-unlist(FF3[,3])
 hml<-unlist(FF3[,4])
@@ -235,7 +264,11 @@ for(i in 1:(ncol(P25)-1))
 
 ## 4.2 Formatting the results
 
-We then read out the results, stack them into corresponding vectors, then reshape them into the $5\times 5$ format as in the paper for ease of comparison. Results are highly similar and we have not yet identify why they do not match exactly, perhaps due to rounding errors.
+We then read out the results, stack them into corresponding vectors, then reshape them into the $5\times 5$ format as in the paper for ease of comparison. 
+
+
+The regression results are highly similar to table 6 in @Fama1993 and the differences are due to the data discrepancies in the downloaded portfolio returns (c.f. section 2.1).
+
 
 ```{r}
 betas <- vector()
@@ -251,14 +284,6 @@ for(i in 1:(ncol(P25)-1))
   R.squareds <- cbind(R.squareds, results[[i]]$adj.r.squared)
 }
 
-# resize the output to 5x5 format like Fama French paper
-resize <- function(x)
-{
-  df = data.frame(matrix(x, nrow=5, byrow = TRUE))
-  colnames(df) = c("Low", "2", "3", "4", "High")
-  rownames(df) = c("Small", "2", "3", "4", "Big")
-  return(df)
-}
 # resize alpha
 alpha <- resize(betas[1,])
 kable(alpha, digits=2)
@@ -302,6 +327,37 @@ kable(resize(std.errors), digits=2)
 ```
 
 \includegraphics{FF1993-Table6-2.PNG}
+
+
+Further, as @Fama1993 is mainly about explaining the average returns of the portfolios by the regressed coefficients of the factors, instead of pure statistical significance over the time series. We could visualize the average returns of the portfolios and betas using `ggplot2`’s `geom_tile()`, adding numerical values using `geom_text()`. Aesthetically, `scale_y_discrete()` is used for reversing the default order of the y-axis to match the tables in the paper (SMALL comes on top), and `labs()` for renaming legend titles. 
+
+
+One detail in formatting is that the "+" sign between blocks of ggplot functions cannot be at the beginning of the line, and only works at the end of the line or between two blocks.
+
+
+```{r echo = T, eval = F}
+heat.prep   = function(df)  {
+  df.return = expand.grid(
+        HML = c("LOW", "2", "3", "4", "HIGH"),
+        SMB = c("SMALL", "2", "3", "4", "BIG"))
+  df.return$Return  = df
+  return(df.return)
+}
+
+heat.plot   = function(df, legend.label = "Return") {
+    ggplot(data = heat.prep(df), aes(x = HML, y = SMB, fill = Return)) + 
+    geom_tile() + geom_text(aes(label=round(Return, digits = 2))) + 
+    scale_y_discrete(limits = rev(levels(heat.prep(P25.return)$SMB))) + 
+    labs(fill = legend.label)
+}
+```
+
+
+\includegraphics{Plots/P25_Heat.png}
+
+
+From the heat maps we can clearly see that there is no clear trend in Alpha (intercept) or Market Beta, with Alphas close to 0 and Market Betas close to 1, consistent with CAPM. The regressed SMB Betas increase monotonically going small caps, while the regressed HML Betas increase monotonically going high book-to-market values (growth stocks). These corresponds to the general increase of portfolio returns from the lowest at bottom left (large cap and value stocks) to the highest at top right (small cap and growth stocks). 
+
 
 \newpage
 # 5. S&P500 Results
@@ -348,6 +404,7 @@ Stock.Prices.Daily <- SP500.data[SP500.data$date>="2010-01-01" &
 # Current FF3 till 201803, monthly
 FF3 <- read.csv("Data/original/FF3.csv")
 FF <- FF3[FF3$X >= 201001 & FF3$X <= 201712,]
+FF3[,-1] <- FF3[,-1]/100.00
 
 # Convert series to XTS for using quantmod's monthlyReturn function
 Stock.Prices.Daily <- xts(Stock.Prices.Daily[,-1], 
@@ -369,7 +426,7 @@ ncol(Stock.Prices.Monthly)
 
 ```
 
-As in this example, we start with 465 stocks and remove 23 stocks with incomplete data.
+As in this example, we start with 465 stocks and remove 23 stocks with incomplete data (95% preserved).
 
 Then the regression part is similar to Section 4.1, except that we need to transpose the coefficients to get the dimensions right before stacking them together column by column, with each column representing one stock.
 
@@ -668,6 +725,37 @@ We can use the `cor()` function to calculate the correlation matrix of data seri
 Plotting the correlations between regression results and stock returns reveal no particular pattern except for the intercept term in general. Top 20 stock returns do show positive correlations of the 3 factors, while the bottom 20 show negative correlations, which is consistent with the rationale behind the factors.
 
 
+Another perspective is we could look at the regressed factor values and see whether we can select stock based on these values. We first calculate the percentile for each stock return using the `ecdf()` function: below code first defines our percentile function by supplying the all stock returns as a vector, then the `ecdf_percentile()` function can return a vector of percentiles, given a vector of returns.
+
+
+```{r echo=TRUE, eval=FALSE}
+# Define function
+ecdf_percentile <- ecdf(Results$Return)
+# Apply function. 
+ecdf_percentile(Results$Return)
+```
+
+
+Among 442 stocks with regression results, we take top 20 and bottom 20 stocks for the estimated coefficient of each factor. We then boxplot their return percentiles. Stock with greatest return from 2010 to 2017 will have a return percentile close to 1, stocks with poor returns will have a percentile close to 0.
+
+
+We perform the selection with and without filtering for significance of the estimated coefficient.
+
+
+\includegraphics{Plots/Return-Percentile-2010-2017-FF3.png}
+
+
+From the results, *HML* shows strong separation power that **Growth** stocks with low book-to-market ratio outperform in this period, while **Value** stocks perform below average. Looking into the 20 stocks with the lowest estimated *HML* coefficient reveals that they are mostly Health Care or Consumer Discretionary. Limiting statistical significance to 5% does not alter the results much.
+
+
+```{r echo=FALSE}
+temp <- read.csv("FF3-Return-Factor-Bottom-Not-Significant.csv")
+temp <- temp[,-1]
+temp <- data.frame(temp[temp$Factor=="HML", c("Ticker", "Name", "Sector", "Factor", "Factor.Value", "Factor.P", "Return.2010.2017", "Return.Percentile")])
+colnames(temp)<-c("Ticker", "Name", "Sector", "Factor", "Est.Beta", "P-Value", "Return", "Percentile")
+kable(temp, row.names = FALSE, digits = 2) 
+```
+
 
 # 6. Going 5-Factor
 
@@ -800,7 +888,7 @@ We perform the selection with and without filtering for significance of the esti
 \includegraphics{Plots/Return-Percentile-2010-2017.png}
 
 
-From the results, if we only consider value without significance, *HML* shows strong separation power that **Growth** stocks with low book-to-market ratio outperform in this period, while **Value** stocks perform below average. Looking into the 20 stocks with the lowest estimated *HML* coefficient reveals that they are mostly Health Care or Comsumer Discretionary. When limiting scope to coefficients that are significant at 5% level, however, shows no particular separation power of all Fama French factors. Interestingly, at 5% significance, stocks with largest market exposure and smallest market exposure (CAPM beta / beta for Mkt-Rf) all perform below average.
+From the results, if we only consider value without significance, *HML* shows strong separation power that **Growth** stocks with low book-to-market ratio outperform in this period, while **Value** stocks perform below average. Looking into the 20 stocks with the lowest estimated *HML* coefficient reveals that they are mostly Health Care or Consumer Discretionary. When limiting scope to coefficients that are significant at 5% level, however, shows no particular separation power of all Fama French factors. Interestingly, at 5% significance, stocks with largest market exposure and smallest market exposure (CAPM beta / beta for Mkt-Rf) all perform below average.
 
 
 ```{r echo=FALSE}
