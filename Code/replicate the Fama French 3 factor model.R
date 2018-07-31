@@ -19,10 +19,10 @@ P25 = read_excel ("Data/FF3_25_ValueWeighted.xlsx")
 
 # Unlist: convert the data into vector format
 rmrf = unlist (FF3[, 2])
-smb = unlist (FF3[, 3])
-hml = unlist (FF3[, 4])
-rf = unlist (FF3[, 5])
-ri = unlist (P25[, 2])
+smb  = unlist (FF3[, 3])
+hml  = unlist (FF3[, 4])
+rf   = unlist (FF3[, 5])
+ri   = unlist (P25[, 2])
 rirf = unlist (ri-rf) 
 rirf 
 
@@ -40,9 +40,9 @@ for (i in 1: (ncol (P25) - 1)) {
 
 # Set up empty vectors
 
-betas = vector ()
+betas      = vector ()
 std.errors = vector ()
-t.values = vector ()
+t.values   = vector ()
 R.squareds = vector ()
 
 # Save all betas' regression results
@@ -70,8 +70,8 @@ alpha
 
 # Resize beta
 market.beta = resize (betas[2, ])
-SMB.beta = resize (betas[3, ])
-HML.beta = resize (betas[4, ])
+SMB.beta    = resize (betas[3, ])
+HML.beta    = resize (betas[4, ])
 
 # Display betas
 market.beta
@@ -80,8 +80,8 @@ HML.beta
 
 # Resize t-stats
 market.t = resize (t.values[2,])
-SMB.t = resize (t.values[3,])
-HML.t = resize (t.values[4,])
+SMB.t    = resize (t.values[3,])
+HML.t    = resize (t.values[4,])
 market.t
 
 # Resize R-squareds
