@@ -23,7 +23,7 @@ smb = unlist (FF3[, 3])
 hml = unlist (FF3[, 4])
 rf = unlist (FF3[, 5])
 ri = unlist (P25[, 2])
-rirf = unlist (ri-rf) # excess return of the target fund
+rirf = unlist (ri-rf) 
 rirf 
 
 
