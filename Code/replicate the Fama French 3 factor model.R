@@ -29,13 +29,13 @@ rirf
 
 #3# Start batch regressing 25 portfolios 
 
-results = list()
+results = list ()
 
 # Data starts from the 2nd col of P25
-for (i in 1: (ncol(P25) - 1)) { 
+for (i in 1: (ncol (P25) - 1)) { 
   rirf = unlist (P25[, i + 1]) - rf   
      y = lm (rirf ~ rmrf + smb + hml)
-  results[[i]] = summary (y)
+  results [[i]] = summary (y)
 }
 
 # Set up empty vectors
@@ -47,7 +47,7 @@ R.squareds = vector ()
 
 # Save all betas' regression results
 
-for(i in 1: (ncol (P25) - 1)) {
+for (i in 1: (ncol (P25) - 1)) {
        betas = cbind (betas, results[[i]]$coefficients[, 1])
   std.errors = cbind (std.errors,results[[i]]$sigma)
     t.values = cbind (t.values, results[[i]]$coefficients[, 3])
