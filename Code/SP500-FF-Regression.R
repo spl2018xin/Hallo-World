@@ -3,24 +3,24 @@ library(quantmod)
 library(xts)
 
 # Read SP500 daily data and convert date column to date format
-SP500.data <- read.csv("Downloaded Stock Prices/SP500_price.adjusted_2010-2017.csv")
-SP500.data$date <- as.Date(SP500.data$date)
+SP500.data      = read.csv("Downloaded Stock Prices/SP500_price.adjusted_2010-2017.csv")
+SP500.data$date = as.Date(SP500.data$date)
 
 # Read in SP500 company ticker information
-Mapping <- read.csv("Downloaded Stock Prices/constituents.csv")
-colnames(Mapping)[1] <- "Ticker"
+Mapping              = read.csv("Downloaded Stock Prices/constituents.csv")
+colnames(Mapping)[1] = "Ticker"
 
 # Current FF3 till 201803, monthly
-FF3 <- read.csv("Downloaded Stock Prices/FF3.csv")
+FF3 = read.csv("Downloaded Stock Prices/FF3.csv")
 
 # Select 2010 - 2017 range to match FF3
-Stock.Prices.Daily <- SP500.data[SP500.data$date>="2010-01-01" & 
-                                   SP500.data$date<="2017-12-31",-1]
+Stock.Prices.Daily = SP500.data[SP500.data$date>="2010-01-01" & 
+                                   SP500.data$date<="2017-12-31", -1]
 
 #=====return
 # Calculate period returns
-Stock.Returns <- tail(Stock.Prices.Daily[,-1], n=1) / head(Stock.Prices.Daily[,-1], n=1)-1
-rownames(Stock.Returns) <- "Return.2010.2017"
+Stock.Returns            = tail(Stock.Prices.Daily[ ,-1], n = 1) / head(Stock.Prices.Daily[ ,-1], n = 1) - 1
+rownames(Stock.Returns)  = "Return.2010.2017"
 
 # Transpose for easier analysis
 Stock.Returns <- t(Stock.Returns)
