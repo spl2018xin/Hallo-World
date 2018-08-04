@@ -94,5 +94,29 @@ coef.t = cbind (rbind (alpha, market.beta, SMB.beta, HML.beta),
 View (coef.t)
 
 
+# heat map
+heat.plot = function(df, legend.label = "Return")
+{
+  # prepare data into 25 rows vector
+  plot.data = expand.grid(  HML = c("LOW", "2", "3", "4", "HIGH"),
+                            SMB = c("SMALL", "2", "3", "4", "BIG"))
+  plot.data$Return = matrix(df, nrow = 25)
+
+  # plot
+  ggplot(data = plot.data, aes(x = HML, y = SMB, fill = Return)) + 
+    geom_tile() + 
+    geom_text(aes(label=round(Return, digits = 2))) + 
+    labs(fill = legend.label)
+}
+
+# mean excess return of the 25 FF portfolios
+heat.plot(colMeans(P25[,-1] - FF3$RF))
+
+heat.plot(alpha,       "Alpha")
+heat.plot(market.beta, "Market Beta")
+heat.plot(SMB.beta,    "SMB Beta")
+heat.plot(HML.beta,    "HML Beta")
+
+
 
 
